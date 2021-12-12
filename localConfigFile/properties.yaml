@@ -1,0 +1,18 @@
+# Log output configuration file
+rootLogger:
+  # root log config
+  file: # string	路径/名称，默认当前路径/default.log
+  maxSize: # int	日志轮转大小，单位MB，默认500MB
+  maxAge: # int	日志轮转最大时间，单位day，默认1 day
+  maxBackup: # int	日志轮转个数，默认10
+  interval: # int	日志轮转周期，默认24 hour
+  callerSkip: # int	默认1
+  addCaller: # bool	默认true
+  enableConsole: # bool	启用命令行格式输出，默认false
+  async: # bool	是否异步采集日志，默认true
+  level: # string 日志級別
+
+  # appender logger
+  appenders:
+    - appender: pluginLogger
+      Append: false

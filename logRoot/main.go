@@ -70,7 +70,7 @@ func main() {
 		coreRoot, // Print log to the root node by default
 	)
 	loggerRoot := zap.New(coreRoot, zap.AddCaller(), zap.Fields(zap.String("serviceName", "Root")))
-	loggerPlugin := zap.New(coreTeePlugin, zap.AddCaller(), zap.Fields(zap.String("serviceName", "Plugin")))
+	loggerPlugin := zap.New(coreTeePlugin, zap.AddCaller(), zap.Fields(zap.String("serviceName", "Plugin"))) // print logs to two file
 
 	loggerRoot.Info("root test")
 	loggerPlugin.Info("plugin test")
