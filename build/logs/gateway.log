@@ -1,0 +1,2 @@
+{"level":"\u001b[35mdebug\u001b[0m","time":"2021-12-12T18:16:40.372+0800","linenum":"lumberjackDemo/main.go:25","msg":"Hi Gateway Im Debug","serviceName":"Gateway"}
+{"level":"\u001b[34minfo\u001b[0m","time":"2021-12-12T18:16:40.372+0800","linenum":"lumberjackDemo/main.go:26","msg":"Hi Gateway  Im Info","serviceName":"Gateway"}
