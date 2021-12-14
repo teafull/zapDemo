@@ -1,0 +1,14 @@
+{
+  "rootLogger":{
+    "file":"./root.debug.log",
+    "maxSize":100,
+    "maxAge":1,
+    "maxBackup":10,
+    "interval":24,
+    "callerSkip":1,
+    "async":true,
+    "level":"Debug",
+    "addCaller":true,
+    "patternLayout":"json"
+  }
+}
