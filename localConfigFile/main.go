@@ -13,6 +13,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/fsnotify/fsnotify"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
+	"gopkg.in/natefinch/lumberjack.v2"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"log"
@@ -24,6 +27,72 @@ const (
 )
 
 func main() {
+
+	// 沒有日志配置文件時，使用默認的日志配置
+	debugLoggerHook := lumberjack.Logger{
+		Filename:   "./logs/localConfigFile.debug.log", // 日志文件路径
+		MaxSize:    100,                                // 每个日志文件保存的最大尺寸 单位：M
+		MaxAge:     7,                                  // 文件最多保存多少天
+		MaxBackups: 10,                                 // 日志文件最多保存多少个备份
+		Compress:   true,                               // 是否压缩
+	}
+	errorLoggerHook := lumberjack.Logger{ // 僅輸出錯誤級別以上的日志
+		Filename:   "./logs/localConfigFile.error.log",
+		MaxSize:    50,
+		MaxAge:     7,
+		MaxBackups: 10,
+		Compress:   true,
+	}
+
+	// 公用编码器
+	encoderConfig := zapcore.EncoderConfig{
+		TimeKey:        "ts",
+		LevelKey:       "lv",
+		NameKey:        "logger",
+		CallerKey:      "caller",
+		MessageKey:     "msg",
+		StacktraceKey:  "stack",
+		LineEnding:     zapcore.DefaultLineEnding,
+		EncodeLevel:    zapcore.LowercaseLevelEncoder,
+		EncodeTime:     zapcore.ISO8601TimeEncoder,
+		EncodeDuration: zapcore.SecondsDurationEncoder,
+		EncodeCaller:   zapcore.ShortCallerEncoder,
+		EncodeName:     zapcore.FullNameEncoder,
+	}
+
+	// 设置日志级别
+	debugAtomicLevel := zap.NewAtomicLevel()
+	debugAtomicLevel.SetLevel(zap.DebugLevel)
+	debugCore := zapcore.NewCore(
+		zapcore.NewJSONEncoder(encoderConfig),
+		zapcore.NewMultiWriteSyncer(zapcore.AddSync(&debugLoggerHook), zapcore.AddSync(os.Stdout)),
+		debugAtomicLevel,
+	)
+	errorCore := zapcore.NewCore(
+		zapcore.NewJSONEncoder(encoderConfig),
+		zapcore.NewMultiWriteSyncer(zapcore.AddSync(&errorLoggerHook)),
+		zap.WarnLevel,
+	)
+	coreTee := zapcore.NewTee( // print logs of plugin to root that is plugin parent, and it self。
+		debugCore,
+		errorCore, // Print log to the root node by default
+	)
+	drvDebug := zap.New(coreTee, zap.AddCaller(), zap.Fields(zap.String("serviceName", "Root")))
+
+	drvDebug.Info("info 1...................")
+	drvDebug.Debug("debug 1.................")
+	drvDebug.Warn("Warn 1.................")
+	drvDebug.Error("Error 1.................")
+
+	fmt.Println("")
+	debugAtomicLevel.SetLevel(zap.InfoLevel)
+
+	drvDebug.Info("info 2...................")
+	drvDebug.Debug("debug 2.................")
+	drvDebug.Warn("Warn   3.................")
+	drvDebug.Error("Error   3.................")
+
+	return
 
 	// first load log config file
 	lp, err := ReadLogConfigFile(logfile)
