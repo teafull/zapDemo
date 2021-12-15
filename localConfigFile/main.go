@@ -12,15 +12,28 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/fsnotify/fsnotify"
+	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"log"
 	"os"
+)
 
-	"github.com/fsnotify/fsnotify"
-	"gopkg.in/yaml.v2"
+const (
+	logfile = "localConfigFile/properties.yaml"
 )
 
 func main() {
+
+	// first load log config file
+	lp, err := ReadLogConfigFile(logfile)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(0)
+	}
+	jsonTmp, _ := json.Marshal(lp)
+	fmt.Println(string(jsonTmp))
+
 	// monitor config file
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
@@ -40,7 +53,15 @@ func main() {
 
 				if event.Op&fsnotify.Write == fsnotify.Write {
 					log.Println("modified file:", event.Name)
+
 					// Reload file
+					lp, err := ReadLogConfigFile(logfile)
+					if err != nil {
+						fmt.Println(err)
+					} else {
+						jsonTmp, _ := json.Marshal(lp)
+						fmt.Println(string(jsonTmp))
+					}
 				} else {
 					// Unwanted operation
 				}
@@ -60,27 +81,25 @@ func main() {
 		log.Fatal(err)
 	}
 	<-done
+}
 
-	// read config file
-	fileByte, err := ioutil.ReadFile("localConfigFile/properties.yaml")
+// ReadLogConfigFile read log config from local config file.
+func ReadLogConfigFile(configFile string) (LoggerProperties, error) {
+	fileByte, err := ioutil.ReadFile(configFile)
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(0)
+		return LoggerProperties{}, err
 	}
+
 	lp := LoggerProperties{}
 	err = yaml.Unmarshal(fileByte, &lp)
 	if err != nil {
-		log.Fatalf("error: %v", err)
+		return LoggerProperties{}, err
 	}
-	fmt.Println(lp)
 
-	jsonStr, err := json.Marshal(lp)
-	if err != nil {
-		log.Fatalf("error: %v", err)
-	}
-	fmt.Println(string(jsonStr))
+	return lp, nil
 }
 
+// logProperties define logger property
 type logProperties struct {
 	File          string `yaml:"file,omitempty" json:"file,omitempty"`
 	MaxSize       int    `yaml:"maxSize,omitempty" json:"maxSize,omitempty"`
@@ -101,6 +120,7 @@ type logProperties struct {
 	Appenders []logProperties `yaml:"appenders,omitempty" json:"appenders,omitempty"`
 }
 
+// LoggerProperties define log
 type LoggerProperties struct {
 	RootLogger logProperties `yaml:"rootLogger" json:"rootLogger,omitempty"`
 }
